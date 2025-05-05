@@ -1,7 +1,8 @@
 package co.avbinvest.companyservices.service;
 
-import co.avbinvest.companyservices.model.*;
-import co.avbinvest.companyservices.repository.*;
+import co.avbinvest.companyservices.dto.CompanyDTO;
+import co.avbinvest.companyservices.model.Company;
+import co.avbinvest.companyservices.repository.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,38 +15,50 @@ public class CompanyService {
     private CompanyRepository companyRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    public List<Company> getAllCompanies() {
-        return companyRepository.findAll();
+    public List<CompanyDTO> getAllCompanies() {
+        return (List<CompanyDTO>) companyRepository.findAll().stream()
+                .map(company -> new CompanyDTO(company.getId(), company.getName(), company.getBudget()))
+                .collect(Collectors.toList());
     }
 
-    public Company getCompanyById(Long id) {
-        return companyRepository.findById(id).orElse(null);
+    public CompanyDTO getCompanyById(Long id) {
+        Company company = companyRepository.findById(id).orElseThrow(()
+                -> new RuntimeException("Company not found"));
+        return new CompanyDTO(company.getId(), company.getName(), company.getBudget());
     }
 
+    /*
     public List<Long> getEmployeeIdsByCompanyId(Long companyId) {
         return userRepository.findByCompanyID_Id(companyId)
                 .stream()
                 .map(User::getId)
                 .collect(Collectors.toList());
     }
+    */
 
-    public Company createCompany(Company company) {
-        return companyRepository.save(company);
+    public CompanyDTO createCompany(CompanyDTO companyDTO) {
+        Company company = new Company();
+        company.setName(companyDTO.getName());
+        company = companyRepository.save(company);
+        return new CompanyDTO(company.getId(), company.getName(), company.getBudget());
     }
 
-    public Company updateCompany(Long id, Company companyDetails) {
+    public Company updateCompany(Long id, CompanyDTO companyDTO) {
         Company company = companyRepository.findById(id).orElse(null);
         if (company != null) {
-            company.setName(companyDetails.getName());
-            company.setBudget(companyDetails.getBudget());
+            // Обновление данных компании с использованием DTO
+            company.setName(companyDTO.getName());
+            company.setBudget(companyDTO.getBudget());
             return companyRepository.save(company);
         }
-        return null;
+        return null; // Возвращаем null, если компания не найдена
     }
 
-    public void deleteCompany(Long id) {
-        companyRepository.deleteById(id);
+    public boolean deleteCompany(Long id) {
+        if (companyRepository.existsById(id)) {
+            companyRepository.deleteById(id);
+            return true; // Возвращаем true, если удаление прошло успешно
+        }
+        return false; // Возвращаем false, если компания не найдена
     }
 }
