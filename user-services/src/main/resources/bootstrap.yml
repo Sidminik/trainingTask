@@ -1,8 +1,0 @@
-spring:
-  application:
-    name: user-services
-  cloud:
-    config:
-      uri: http://config-server:8888
-      name: user-services
-      profile: default
